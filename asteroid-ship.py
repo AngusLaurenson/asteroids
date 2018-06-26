@@ -70,11 +70,24 @@ class player(thing):
 
         if keys[pg.K_SPACE]:
             # shoots
-            pass
+            self.shoot()
+
+    def shoot(self):
+        # create an instance of the bullet class
+        bodies.append(bullet(self.position,self.angle,self.velocity))
 
     def draw_arrow(self):
         # code for drawing line to show orientation
         pg.draw.line(window, (255,255,255), self.position + 5, self.position + 5 + (10*sp.cos(self.angle),10*sp.sin(self.angle)))
+
+class bullet(thing):
+    """docstring for bullet."""
+    def __init__(self, position, ship_angle, ship_velocity):
+        super(bullet, self).__init__(size=2, position=position+5)
+        self.color = (255,255,255)
+        self.velocity = 20 * sp.array([sp.cos(ship_angle),sp.sin(ship_angle)]) + ship_velocity
+        self.draw_rect()
+        self.lifetime = 0
 
 # create an asteroid
 asterix = asteroid()
@@ -96,25 +109,41 @@ while run:
     window.fill((0,0,0))
 
     # update position of all bodies
-    for body in bodies:
-        if type(body) == player:
-            body.user_input()
-            body.draw_arrow()
-            # print(body.image.collidelist(bodies[1:]))
+    for body1 in bodies:
+        # capture user input
+        if type(body1) == player:
+            body1.user_input()
+            body1.draw_arrow()
 
-        body.draw_rect()
-        body.update_position()
+        # bullets time out
+        if type(body1) == bullet:
+            body1.lifetime += 1
+            if body1.lifetime == 10:
+                bodies.remove(body1)
 
-    if player1.image.colliderect(asterix.image):
-        player1.color = (255,0,0)
+        # update positions
+        body1.draw_rect()
+        body1.update_position()
 
-            # player1.color = (255,255,255)
-        #     print('smash')
-        #     pg.quit()
+    # check collisions for all body pairs
+    for body1 in bodies:
+        for body2 in [i for i in bodies if i != body1]:
+            if body1.image.colliderect(body2.image):
+
+                # if bullet hits asteroid delete both
+                if (type(body1) == bullet and type(body2) == asteroid):
+                    bodies.remove(body1)
+                    bodies.remove(body2)
+
+                # if player hits asteroid change color
+                elif type(body1) == player and type(body2) == asteroid:
+                    body1.color = (255,255,255)
 
     # updates the position
     pg.display.update()
 
-    # check for collision
+    # check for endgame conditions
+    # if len([i for i in bodies if type(i) == asteroid]) == 0:
+    #     pg.quit()
 
 pg.quit()
