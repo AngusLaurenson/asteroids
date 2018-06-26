@@ -10,24 +10,12 @@ width, height = 500, 500
 window = pg.display.set_mode((500,500))
 pg.display.set_caption("Asteroids.py")
 
-# player spaceship properties
-dv = 1
-# angle
-da      = 0.5
-
-class newClass(object):
-    """docstring for newClass."""
-    def __init__(self, arg):
-        super(newClass, self).__init__()
-        self.arg = arg
-
-
+''' CLASS HIERARCHY '''
 # base class for objects in the game
 class thing():
     """docstring for thing."""
     def __init__(self, size, position='None', velocity='None'):
         self.size = size
-
         # if no position or velocity given,
         # generate random number
         if position != 'None':
@@ -42,7 +30,7 @@ class thing():
     def update_position(self):
         self.position = (self.position + self.velocity) % width
 
-    def draw(self):
+    def draw_rect(self):
         self.image = pg.draw.rect(window,
         self.color,
         (self.position[0],self.position[1],self.size,self.size)
@@ -65,17 +53,20 @@ class player(thing):
         )
         self.angle = 0
         self.color = (0,0,255)
+        self.dangle = 0.5 # radians
+        self.acceleration = 1 # pixel per loop ** 2
+        self.draw_rect()
 
     def user_input(self):
         keys = pg.key.get_pressed()
         if keys[pg.K_LEFT]:
-            self.angle -= da
+            self.angle -= self.dangle
 
         if keys[pg.K_RIGHT]:
-            self.angle += da
+            self.angle += self.dangle
 
         if keys[pg.K_UP]:
-            self.velocity += dv * sp.array([sp.cos(self.angle), sp.sin(self.angle)])
+            self.velocity += self.acceleration * sp.array([sp.cos(self.angle), sp.sin(self.angle)])
 
         if keys[pg.K_SPACE]:
             # shoots
@@ -90,7 +81,6 @@ asterix = asteroid()
 player1 = player()
 bodies = [player1,asterix]
 
-
 # control loop
 run = True
 while run:
@@ -104,14 +94,27 @@ while run:
 
     # clear the screen between frames
     window.fill((0,0,0))
+
+    # update position of all bodies
     for body in bodies:
         if type(body) == player:
             body.user_input()
             body.draw_arrow()
-        body.draw()
+            # print(body.image.collidelist(bodies[1:]))
+
+        body.draw_rect()
         body.update_position()
+
+    if player1.image.colliderect(asterix.image):
+        player1.color = (255,0,0)
+
+            # player1.color = (255,255,255)
+        #     print('smash')
+        #     pg.quit()
 
     # updates the position
     pg.display.update()
+
+    # check for collision
 
 pg.quit()
